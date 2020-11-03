@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Text;
 using Microsoft.Win32.SafeHandles;
 
 namespace IIG.BinaryFlag
@@ -39,7 +40,6 @@ namespace IIG.BinaryFlag
         /// </summary>
         public void Dispose()
         {
-            _concreteFlag.Dispose();
             Dispose(true);
             GC.SuppressFinalize(this);
         }
@@ -79,7 +79,14 @@ namespace IIG.BinaryFlag
             if (disposing)
                 Handle.Dispose();
 
+            _concreteFlag.Dispose();
+
             Disposed = true;
+        }
+
+        public override string ToString()
+        {
+            return _concreteFlag.ToString();
         }
 
         private abstract class ConcreteBinaryFlag : IDisposable
@@ -115,14 +122,30 @@ namespace IIG.BinaryFlag
 
             public abstract bool GetFlag();
 
+            protected virtual bool? GetFlag(ulong position)
+            {
+                if (position >= Length)
+                    throw new ArgumentOutOfRangeException("Position must be lesser than length");
+                return null;
+            }
+
             protected virtual void Dispose(bool disposing)
             {
                 if (Disposed)
                     return;
 
-                if (disposing) Handle.Dispose();
+                if (disposing)
+                    Handle.Dispose();
 
                 Disposed = true;
+            }
+
+            public override string ToString()
+            {
+                var sb = new StringBuilder();
+                for (uint i = 0; i < Length; i++)
+                    sb.Append((bool) GetFlag(i) ? 'T' : 'F');
+                return sb.ToString();
             }
         }
 
@@ -158,6 +181,12 @@ namespace IIG.BinaryFlag
                 return _flag == uint.MaxValue;
             }
 
+            protected override bool? GetFlag(ulong position)
+            {
+                base.GetFlag(position);
+                return (_flag & (uint) (1L << (int) position)) > 0;
+            }
+
             protected override void Dispose(bool disposing)
             {
                 if (Disposed)
@@ -165,14 +194,9 @@ namespace IIG.BinaryFlag
 
                 if (disposing)
                     Handle.Dispose();
-                // Free any other managed objects here.
-                //
-
-                // Free any unmanaged objects here.
-                //
 
                 Disposed = true;
-                // Call base class implementation.
+
                 base.Dispose(disposing);
             }
         }
@@ -209,6 +233,12 @@ namespace IIG.BinaryFlag
                 return _flag == ulong.MaxValue;
             }
 
+            protected override bool? GetFlag(ulong position)
+            {
+                base.GetFlag(position);
+                return (_flag & (ulong) (1L << (int) position)) > 0;
+            }
+
             protected override void Dispose(bool disposing)
             {
                 if (Disposed)
@@ -216,14 +246,8 @@ namespace IIG.BinaryFlag
 
                 if (disposing)
                     Handle.Dispose();
-                // Free any other managed objects here.
-                //
-
-                // Free any unmanaged objects here.
-                //
 
                 Disposed = true;
-                // Call base class implementation.
                 base.Dispose(disposing);
             }
         }
@@ -261,15 +285,12 @@ namespace IIG.BinaryFlag
             {
                 base.SetFlag(position);
                 _flag[_flag.Length - 1 - (int) (position / 32)] |= (uint) (1L << (int) (position % 32));
-                //_flag |= (uint) (1L << (int) position);
             }
 
             public override void ResetFlag(ulong position)
             {
                 base.ResetFlag(position);
                 _flag[_flag.Length - 1 - (int) (position / 32)] &= uint.MaxValue ^ (uint) (1L << (int) (position % 32));
-
-                //_flag &= uint.MaxValue ^ (uint) (1L << (int) position);
             }
 
             public override bool GetFlag()
@@ -277,23 +298,24 @@ namespace IIG.BinaryFlag
                 return _flag.All(flagPart => flagPart == uint.MaxValue);
             }
 
+            protected override bool? GetFlag(ulong position)
+            {
+                base.GetFlag(position);
+                return (_flag[_flag.Length - 1 - (int) (position / 32)] & (uint) (1L << (int) (position % 32))) > 0;
+            }
+
             protected override void Dispose(bool disposing)
             {
-                _flag = null;
-
                 if (Disposed)
                     return;
 
                 if (disposing)
                     Handle.Dispose();
-                // Free any other managed objects here.
-                //
 
-                // Free any unmanaged objects here.
-                //
+                _flag = null;
 
                 Disposed = true;
-                // Call base class implementation.
+
                 base.Dispose(disposing);
             }
         }
