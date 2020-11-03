@@ -25,7 +25,7 @@ namespace IIG.BinaryFlag
             if (length < 2)
                 throw new ArgumentOutOfRangeException("Length of Flag must be bigger than one");
             if (length > 17179868704)
-                throw new ArgumentOutOfRangeException("Length of Flag must be lesser than '17179868704'");
+                throw new ArgumentOutOfRangeException("Length of Flag must be lesser than '17179868705'");
 
             if (length < 33)
                 _concreteFlag = new UIntConcreteBinaryFlag(length, initialValue);
@@ -259,7 +259,7 @@ namespace IIG.BinaryFlag
             public UIntArrayConcreteBinaryFlag(ulong length, bool initialValue) : base(length)
             {
                 if (Length > 17179868704)
-                    throw new ArgumentOutOfRangeException("Length of flag must be lesser than '17179868704'");
+                    throw new ArgumentOutOfRangeException("Length of flag must be lesser than '17179868705'");
                 _flag = new uint[(int) (Length / 32) + (Length % 32 == 0 ? 0 : 1)];
                 var change = initialValue ? 0 : Length;
                 for (var i = _flag.Length - 1; i >= 0; i--)
