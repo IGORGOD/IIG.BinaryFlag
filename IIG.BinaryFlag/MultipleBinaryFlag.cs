@@ -18,12 +18,12 @@ namespace IIG.BinaryFlag
         /// <summary>
         ///     Constructor for Multiple Binary Flag Object
         /// </summary>
-        /// <param name="length">Length of Binary Flag - How Many Binaries Does Multiple Binary Flag Contain </param>
+        /// <param name="length">Length of Binary Flag - How Many Binaries Does Multiple Binary Flag Contain (2-17179868704) </param>
         /// <param name="initialValue">Initial Value of Binary Elements of Flag</param>
         public MultipleBinaryFlag(ulong length, bool initialValue = true)
         {
             if (length < 2)
-                throw new ArgumentOutOfRangeException("Length of Flag must be bigger than one");
+                throw new ArgumentOutOfRangeException("Length of Flag must be bigger than 1");
             if (length > 17179868704)
                 throw new ArgumentOutOfRangeException("Length of Flag must be lesser than '17179868705'");
 
@@ -66,7 +66,7 @@ namespace IIG.BinaryFlag
         ///     Get Multiple Binary Flag State
         /// </summary>
         /// <returns>True - if All Binaries are True, otherwise - False</returns>
-        public bool GetFlag()
+        public bool? GetFlag()
         {
             return _concreteFlag.GetFlag();
         }
@@ -120,7 +120,7 @@ namespace IIG.BinaryFlag
                     throw new ArgumentOutOfRangeException("Position must be lesser than length");
             }
 
-            public abstract bool GetFlag();
+            public abstract bool? GetFlag();
 
             protected virtual bool? GetFlag(ulong position)
             {
@@ -144,14 +144,20 @@ namespace IIG.BinaryFlag
             {
                 var sb = new StringBuilder();
                 for (uint i = 0; i < Length; i++)
-                    sb.Append((bool) GetFlag(i) ? 'T' : 'F');
+                {
+                    var buf = GetFlag(i);
+                    if (buf == null)
+                        return null;
+                    sb.Append((bool) buf ? 'T' : 'F');
+                }
+
                 return sb.ToString();
             }
         }
 
         private class UIntConcreteBinaryFlag : ConcreteBinaryFlag
         {
-            private uint _flag;
+            private uint? _flag;
 
             public UIntConcreteBinaryFlag(ulong length, bool initialValue) : base(length)
             {
@@ -166,23 +172,29 @@ namespace IIG.BinaryFlag
 
             public override void SetFlag(ulong position)
             {
+                if (_flag == null)
+                    return;
                 base.SetFlag(position);
                 _flag |= (uint) (1L << (int) position);
             }
 
             public override void ResetFlag(ulong position)
             {
+                if (_flag == null)
+                    return;
                 base.ResetFlag(position);
                 _flag &= uint.MaxValue ^ (uint) (1L << (int) position);
             }
 
-            public override bool GetFlag()
+            public override bool? GetFlag()
             {
-                return _flag == uint.MaxValue;
+                return _flag == null ? (bool?) null : _flag == uint.MaxValue;
             }
 
             protected override bool? GetFlag(ulong position)
             {
+                if (_flag == null)
+                    return null;
                 base.GetFlag(position);
                 return (_flag & (uint) (1L << (int) position)) > 0;
             }
@@ -195,6 +207,8 @@ namespace IIG.BinaryFlag
                 if (disposing)
                     Handle.Dispose();
 
+                _flag = null;
+
                 Disposed = true;
 
                 base.Dispose(disposing);
@@ -203,7 +217,7 @@ namespace IIG.BinaryFlag
 
         private class ULongConcreteBinaryFlag : ConcreteBinaryFlag
         {
-            private ulong _flag;
+            private ulong? _flag;
 
             public ULongConcreteBinaryFlag(ulong length, bool initialValue) : base(length)
             {
@@ -218,23 +232,29 @@ namespace IIG.BinaryFlag
 
             public override void SetFlag(ulong position)
             {
+                if (_flag == null)
+                    return;
                 base.SetFlag(position);
                 _flag |= (ulong) (1L << (int) position);
             }
 
             public override void ResetFlag(ulong position)
             {
+                if (_flag == null)
+                    return;
                 base.ResetFlag(position);
                 _flag &= ulong.MaxValue ^ (ulong) (1L << (int) position);
             }
 
-            public override bool GetFlag()
+            public override bool? GetFlag()
             {
-                return _flag == ulong.MaxValue;
+                return _flag == null ? (bool?)null : _flag == ulong.MaxValue;
             }
 
             protected override bool? GetFlag(ulong position)
             {
+                if (_flag == null)
+                    return null;
                 base.GetFlag(position);
                 return (_flag & (ulong) (1L << (int) position)) > 0;
             }
@@ -247,7 +267,10 @@ namespace IIG.BinaryFlag
                 if (disposing)
                     Handle.Dispose();
 
+                _flag = null;
+
                 Disposed = true;
+
                 base.Dispose(disposing);
             }
         }
@@ -283,23 +306,29 @@ namespace IIG.BinaryFlag
 
             public override void SetFlag(ulong position)
             {
+                if (_flag == null)
+                    return;
                 base.SetFlag(position);
                 _flag[_flag.Length - 1 - (int) (position / 32)] |= (uint) (1L << (int) (position % 32));
             }
 
             public override void ResetFlag(ulong position)
             {
+                if (_flag == null)
+                    return;
                 base.ResetFlag(position);
                 _flag[_flag.Length - 1 - (int) (position / 32)] &= uint.MaxValue ^ (uint) (1L << (int) (position % 32));
             }
 
-            public override bool GetFlag()
+            public override bool? GetFlag()
             {
-                return _flag.All(flagPart => flagPart == uint.MaxValue);
+                return _flag?.All(flagPart => flagPart == uint.MaxValue);
             }
 
             protected override bool? GetFlag(ulong position)
             {
+                if (_flag == null)
+                    return null;
                 base.GetFlag(position);
                 return (_flag[_flag.Length - 1 - (int) (position / 32)] & (uint) (1L << (int) (position % 32))) > 0;
             }
